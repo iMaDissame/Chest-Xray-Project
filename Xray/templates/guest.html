@@ -280,17 +280,18 @@ header h2 {
                 </div>
             </div>
             <ul class="main-menu">
+              <li><a href="{% url 'guest' %}" >Home</a></li>
                 <li><a href="{% url 'doctor_login' %}" class="active">Doctor sign in</a></li>
                 <li><a href="{% url 'guest' %}">Medical chatbot</a></li>
                 <!-- <li><a href="{% url 'signup' %}">Blog</a></li> -->
                 <li><a href="{% url 'about' %}">About us</a></li>
-                <li><a href="{% url 'index' %}">Home</a></li>
+                
                 
             </ul>
         </div>
     <!-- Header section -->
     <header class="header-section">
-        <a href="{% url 'doctoriterface' %}" class="site-logo">
+        <a href="{% url 'guest' %}" class="site-logo">
             <img src="{% static 'img/logo2.jpg' %}" alt="Chest Xray" height="40" width="60" alt="">
             <span style="color: white;">Chest Xray</span> 
         </a>

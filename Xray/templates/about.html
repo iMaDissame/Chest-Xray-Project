@@ -37,7 +37,7 @@
             </div>
         </div>
         <ul class="main-menu">
-			<li><a href="{% url 'about' %}">Home</a></li>
+			<li><a href="{% url 'index' %}">Home</a></li>
             <li><a href="{% url 'doctor_login' %}" class="active">Doctor Sign in</a></li>
             <li><a href="{% url 'guest' %}">Medical chatbot</a></li>
             <!-- <li><a href="{% url 'signup' %}">Blog</a></li> -->
@@ -116,8 +116,8 @@
     <footer class="footer-section">
         <div class="footer-social">
             <a href="{% url 'doctor_login' %}">Log in</a>
-            <a href="{% url 'signup' %}">Sign up</a>
-            <a href="#">Contact us</a>
+            <a href="{% url 'guest' %}">Connect as guest</a>
+            <a href="{% url 'about' %}">About us</a>
         </div>
     </footer>
 
