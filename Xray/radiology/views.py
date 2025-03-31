@@ -260,3 +260,57 @@ def chatbot_view(request):
             return JsonResponse({'error': str(e)}, status=500)
     else:
         return JsonResponse({'response': 'No input provided'})
+    
+    
+import openai
+import os
+
+# Setting the OpenAI API key
+openai.api_key = "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"
+
+def heartbeat_classification(request):
+    context = {
+        'heart_rate': None,
+        'prediction': None,
+        'error': None
+    }
+
+    if request.method == 'POST':
+        age = request.POST.get('age')
+        gender = request.POST.get('gender')
+        file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'heart_rate.txt')
+
+        try:
+            # Read heart rate from the file where Arduino wrote it
+            if os.path.exists(file_path):
+                with open(file_path, 'r') as file:
+                    heart_rate = file.read().strip()
+                context['heart_rate'] = heart_rate
+                print("Heart Rate from file:", heart_rate)  # Verify the heart rate is read correctly
+
+                # Construct the prompt for ChatGPT
+                if heart_rate:
+                    prompt = f"A {gender} patient aged {age} years with a heart rate of {heart_rate} BPM. What could be the medical interpretation of this heart rate?"
+                    response = openai.ChatCompletion.create(
+                        model="gpt-3.5-turbo",
+                        messages=[
+                            {"role": "user", "content": prompt}
+                        ]
+                    )
+                    print("OpenAI API Response Object:", response)  # Print the whole response object
+                    if response and 'choices' in response and response['choices']:
+                        context['prediction'] = response['choices'][0]['message']['content']
+                        print("Extracted Prediction:", context['prediction'])  # Print the extracted prediction
+                    else:
+                        context['error'] = "No valid response received from OpenAI."
+                else:
+                    context['error'] = "Heart rate data is not available."
+
+            else:
+                context['error'] = "Heart rate file not found."
+
+        except Exception as e:
+            print("Exception caught:", str(e))  # This will show any exceptions thrown during the API call or processing
+            context['error'] = f"An error occurred: {str(e)}"
+
+    return render(request, 'heartbeat_classification.html', context)

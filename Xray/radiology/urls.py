@@ -15,5 +15,6 @@ urlpatterns = [
     path('generate_report/', views.generate_report, name='generate_report'),
     path('chatbot/', views.chatbot_view, name='chat'),
     path('documents/', views.list_documents, name='list_documents'),
+    path('heartbeat-classification/', views.heartbeat_classification, name='heartbeat_classification'),
     path('guest/', views.dropdownsearch, name='guest'),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
