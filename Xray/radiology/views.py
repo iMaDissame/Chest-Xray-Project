@@ -200,12 +200,12 @@ import random
 # Initialize and load all necessary resources
 nltk.download('punkt')
 lemmatizer = WordNetLemmatizer()
-BASE_DIR = settings.BASE_DIR
 
-model_path = os.path.join(BASE_DIR, 'models', 'MedicalChatbot_model.h5')
-data_path = os.path.join(BASE_DIR, 'data', 'intents.json')
-words_path = os.path.join(BASE_DIR, 'data', 'words.pkl')
-classes_path = os.path.join(BASE_DIR, 'data', 'classes.pkl')
+
+model_path = os.path.join(settings.BASE_DIR, 'models',  'MedicalChatbot_model.h5')
+data_path = os.path.join(settings.BASE_DIR, 'data', 'intents.json')
+words_path = os.path.join(settings.BASE_DIR, 'data', 'words.pkl')
+classes_path = os.path.join(settings.BASE_DIR, 'data', 'classes.pkl')
 
 try:
     model = load_model(model_path)
@@ -264,10 +264,10 @@ def chatbot_view(request):
     
 import openai
 import os
+import serial
 
 # Setting the OpenAI API key
 openai.api_key = "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"
-
 def heartbeat_classification(request):
     context = {
         'heart_rate': None,
@@ -278,39 +278,61 @@ def heartbeat_classification(request):
     if request.method == 'POST':
         age = request.POST.get('age')
         gender = request.POST.get('gender')
-        file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'heart_rate.txt')
+        port = 'COM5'
+        baudrate = 115200
+        timeout = 1
 
         try:
-            # Read heart rate from the file where Arduino wrote it
-            if os.path.exists(file_path):
-                with open(file_path, 'r') as file:
-                    heart_rate = file.read().strip()
+            ser = serial.Serial(port, baudrate, timeout=timeout)
+            heart_rate = None
+            max_attempts = 30
+            attempts = 0
+
+            # Clear initial buffer
+            ser.reset_input_buffer()
+
+            while attempts < max_attempts:
+                line = ser.readline().decode('utf-8').strip()
+                print(f"Raw line from Arduino: {line}")
+
+                if "Heart rate:" in line:
+                    try:
+                        # Extract heart rate value using split
+                        heart_rate_str = line.split("Heart rate:")[1].split("bpm")[0].strip()
+                        heart_rate_float = float(heart_rate_str)
+                        
+                        if heart_rate_float > 0:
+                            heart_rate = int(heart_rate_float)
+                            break
+                    except (ValueError, IndexError):
+                        pass
+
+                attempts += 1
+                ser.reset_input_buffer()  # Clear buffer between reads
+
+            ser.close()
+
+            if heart_rate:
                 context['heart_rate'] = heart_rate
-                print("Heart Rate from file:", heart_rate)  # Verify the heart rate is read correctly
+                print(f"Valid heart rate detected: {heart_rate} BPM")
 
-                # Construct the prompt for ChatGPT
-                if heart_rate:
-                    prompt = f"A {gender} patient aged {age} years with a heart rate of {heart_rate} BPM. What could be the medical interpretation of this heart rate?"
-                    response = openai.ChatCompletion.create(
-                        model="gpt-3.5-turbo",
-                        messages=[
-                            {"role": "user", "content": prompt}
-                        ]
-                    )
-                    print("OpenAI API Response Object:", response)  # Print the whole response object
-                    if response and 'choices' in response and response['choices']:
-                        context['prediction'] = response['choices'][0]['message']['content']
-                        print("Extracted Prediction:", context['prediction'])  # Print the extracted prediction
-                    else:
-                        context['error'] = "No valid response received from OpenAI."
+                prompt = f"A {gender} patient aged {age} years with a heart rate of {heart_rate} BPM. What could be the medical interpretation of this heart rate?"
+                response = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "user", "content": prompt}
+                    ]
+                )
+                
+                if response and 'choices' in response and response['choices']:
+                    context['prediction'] = response['choices'][0]['message']['content']
                 else:
-                    context['error'] = "Heart rate data is not available."
-
+                    context['error'] = "No valid response received from OpenAI."
             else:
-                context['error'] = "Heart rate file not found."
+                context['error'] = "Could not obtain a valid heart rate reading. Please ensure the sensor is properly placed and try again."
 
         except Exception as e:
-            print("Exception caught:", str(e))  # This will show any exceptions thrown during the API call or processing
+            print(f"Exception caught: {str(e)}")
             context['error'] = f"An error occurred: {str(e)}"
 
     return render(request, 'heartbeat_classification.html', context)

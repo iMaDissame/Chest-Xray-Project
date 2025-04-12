@@ -146,15 +146,61 @@
     <script src="{% static 'js/main.js' %}"></script>
     <script>
         document.getElementById('submitBtn').addEventListener('click', function(e) {
-            e.preventDefault();  // Prevent the default form submission
-            this.innerHTML = 'Measuring...';  // Change button text
-            this.disabled = true;  // Disable the button
-            this.style.backgroundColor = 'rgb(73, 76, 78)';  // Keep the darker color
-            this.style.borderColor = 'rgb(73, 76, 78)';  // Keep the darker border color
-
+            e.preventDefault();
+            
+            // Remove any existing error messages
+            const existingMsg = document.querySelector('.measurement-status');
+            if (existingMsg) {
+                existingMsg.remove();
+            }
+            
+            // Create status message container
+            const statusContainer = document.createElement('div');
+            statusContainer.className = 'measurement-status';
+            statusContainer.innerHTML = `
+                <p style="color: white; margin-top: 20px;">
+                    <span style="color: rgb(191, 111, 21);">Initializing sensor...</span><br>
+                    Please place your finger on the sensor and remain still.<br>
+                    <span id="dots">.</span>
+                </p>
+                <p style="color: lightgray; font-size: 14px;">
+                    Time remaining: <span id="timer">30</span> seconds
+                </p>
+            `;
+            this.parentNode.appendChild(statusContainer);
+            
+            // Animate dots
+            let dotsCount = 0;
+            const dotsInterval = setInterval(() => {
+                const dots = document.getElementById('dots');
+                if (dots) {
+                    dotsCount = (dotsCount + 1) % 4;
+                    dots.textContent = '.'.repeat(dotsCount);
+                }
+            }, 500);
+    
+            // Update timer
+            let timeLeft = 30;
+            const timerInterval = setInterval(() => {
+                const timerElement = document.getElementById('timer');
+                if (timerElement) {
+                    timeLeft--;
+                    timerElement.textContent = timeLeft;
+                }
+            }, 1000);
+            
+            // Update button state
+            this.innerHTML = 'Measuring...';
+            this.disabled = true;
+            this.style.backgroundColor = 'rgb(73, 76, 78)';
+            this.style.borderColor = 'rgb(73, 76, 78)';
+            
+            // Submit form after 30 seconds
             setTimeout(() => {
-            this.form.submit();  // Submit the form after 5 seconds
-            }, 5000);
+                clearInterval(dotsInterval);
+                clearInterval(timerInterval);
+                this.form.submit();
+            }, 30000);
         });
     </script>
 </body>
