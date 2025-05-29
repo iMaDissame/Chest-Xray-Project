@@ -267,7 +267,7 @@ import os
 import serial
 
 # Setting the OpenAI API key
-openai.api_key = "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"
+openai.api_key = ""
 import random
 
 def heartbeat_classification(request):

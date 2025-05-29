@@ -136,7 +136,7 @@ def api_heartbeat_classification(request):
             heart_rate = int(heart_rate)
             
         # OpenAI API call - même que précédemment
-        openai.api_key = "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"
+        openai.api_key = ""
         prompt = f"A {gender} patient aged {age} years with a heart rate of {heart_rate} BPM. What could be the medical interpretation of this heart rate?"
         
         response = openai.ChatCompletion.create(
