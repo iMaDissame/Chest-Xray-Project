@@ -25,8 +25,31 @@ SECRET_KEY = 'django-insecure-0cgjdv%40vea6p%jk$!h4i0r8h(b$asgh)lnh9u)v2uqy39l4@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.0.2.2','172.20.10.4','192.168.100.4','172.20.10.4:8000']
 
+# Update or add these REST Framework settings
+
+CSRF_EXEMPT_ENDPOINTS = [
+    'api_login',
+    'api_register',
+    'api_logout',
+    'api_predict_pneumonia',
+    'api_heartbeat_classification',
+    'api_list_documents',
+    'api_search_doctors',
+    'api_get_doctor_filters',
+]
+
+# Make sure REST Framework settings are correct
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [],  # Empty for development to bypass auth
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # Allow all by default
+    ],
+}
+
+# Set this to True if you need APPEND_SLASH
+APPEND_SLASH = True
 
 # Application definition
 
@@ -39,6 +62,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'import_export',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -49,7 +75,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # Doit être avant CommonMiddleware
+
 ]
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'Xray.urls'
 

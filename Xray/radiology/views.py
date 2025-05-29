@@ -267,7 +267,9 @@ import os
 import serial
 
 # Setting the OpenAI API key
-openai.api_key = "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"
+openai.api_key = "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"
+import random
+
 def heartbeat_classification(request):
     context = {
         'heart_rate': None,
@@ -278,58 +280,27 @@ def heartbeat_classification(request):
     if request.method == 'POST':
         age = request.POST.get('age')
         gender = request.POST.get('gender')
-        port = 'COM5'
-        baudrate = 115200
-        timeout = 1
 
         try:
-            ser = serial.Serial(port, baudrate, timeout=timeout)
-            heart_rate = None
-            max_attempts = 30
-            attempts = 0
+            # Remplacer la lecture Arduino par une valeur aléatoire simulée
+            possible_heart_rates = [60, 65, 72, 78, 85, 90, 67, 55, 57,80]
+            heart_rate = random.choice(possible_heart_rates)
 
-            # Clear initial buffer
-            ser.reset_input_buffer()
+            context['heart_rate'] = heart_rate
+            print(f"Simulated heart rate: {heart_rate} BPM")
 
-            while attempts < max_attempts:
-                line = ser.readline().decode('utf-8').strip()
-                print(f"Raw line from Arduino: {line}")
+            prompt = f"A {gender} patient aged {age} years with a heart rate of {heart_rate} BPM. What could be the medical interpretation of this heart rate?"
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
 
-                if "Heart rate:" in line:
-                    try:
-                        # Extract heart rate value using split
-                        heart_rate_str = line.split("Heart rate:")[1].split("bpm")[0].strip()
-                        heart_rate_float = float(heart_rate_str)
-                        
-                        if heart_rate_float > 0:
-                            heart_rate = int(heart_rate_float)
-                            break
-                    except (ValueError, IndexError):
-                        pass
-
-                attempts += 1
-                ser.reset_input_buffer()  # Clear buffer between reads
-
-            ser.close()
-
-            if heart_rate:
-                context['heart_rate'] = heart_rate
-                print(f"Valid heart rate detected: {heart_rate} BPM")
-
-                prompt = f"A {gender} patient aged {age} years with a heart rate of {heart_rate} BPM. What could be the medical interpretation of this heart rate?"
-                response = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": "user", "content": prompt}
-                    ]
-                )
-                
-                if response and 'choices' in response and response['choices']:
-                    context['prediction'] = response['choices'][0]['message']['content']
-                else:
-                    context['error'] = "No valid response received from OpenAI."
+            if response and 'choices' in response and response['choices']:
+                context['prediction'] = response['choices'][0]['message']['content']
             else:
-                context['error'] = "Could not obtain a valid heart rate reading. Please ensure the sensor is properly placed and try again."
+                context['error'] = "No valid response received from OpenAI."
 
         except Exception as e:
             print(f"Exception caught: {str(e)}")
